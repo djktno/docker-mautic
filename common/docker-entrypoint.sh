@@ -1,6 +1,8 @@
 #!/bin/bash
 set -e
 
+service ssh start
+
 if [ ! -f /usr/local/etc/php/php.ini ]; then
 cat <<EOF > /usr/local/etc/php/php.ini
 date.timezone = "${PHP_INI_DATE_TIMEZONE}"
@@ -159,7 +161,7 @@ if ! grep -Fq "secret_key" /data/local.php; then
 fi
 
 # clear mautic cache
-rm -rf /data/cache/*
+#rm -rf /data/cache/*
 
 if [[ "$MAUTIC_RUN_MIGRATIONS" == "true" ]]; then
     echo >&2 "========================================================================"

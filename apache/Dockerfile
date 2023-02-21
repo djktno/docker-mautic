@@ -1,8 +1,8 @@
-FROM php:7.4-apache
+FROM php:8.0.2-apache as mautic-base
 
-LABEL vendor="Mautic"
+LABEL vendor="Sequelae"
 
-LABEL maintainer="Luiz Eduardo Oliveira Fonseca <luiz@powertic.com>"
+LABEL maintainer="Daniel Kunnath <dkunnath@sequel.ae>"
 
 # Install PHP extensions
 RUN apt-get update && apt-get install --no-install-recommends -y \
@@ -43,6 +43,7 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
     nano \
     zip \
     mariadb-client \
+    openssh-server \
     && apt-get purge -y --auto-remove -o APT::AutoRemove::RecommendsImportant=false \
     && rm -rf /var/lib/apt/lists/* \
     && rm /etc/cron.daily/*
@@ -57,6 +58,8 @@ RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
     && docker-php-ext-install intl mbstring mysqli curl pdo_mysql zip opcache bcmath gd sockets \
     && docker-php-ext-enable intl mbstring mysqli curl pdo_mysql zip opcache bcmath gd sockets
 
+FROM mautic-base
+
 # Install composer
 RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/bin --filename=composer
 
@@ -64,8 +67,8 @@ RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/bin -
 VOLUME /data
 
 # Define Mautic version and expected SHA1 signature
-ENV MAUTIC_VERSION 4.0.0-rc
-ENV MAUTIC_SHA1 ded92ab7403f3c5c5ef0844b0933e0965502d7a5
+ENV MAUTIC_VERSION 4.4.6+s
+ENV MAUTIC_SHA1 7b089e76480a8828c6d3b5dc2d51e9550fc94e44
 
 # By default enable cron jobs
 ENV MAUTIC_RUN_CRON_JOBS true
@@ -89,8 +92,18 @@ ENV PHP_INI_DATE_TIMEZONE='UTC' \
     PHP_MAX_EXECUTION_TIME=300
 
 # Download package and extract to web volume
-RUN curl -o /tmp/mautic.zip -SL https://github.com/mautic/mautic/releases/download/${MAUTIC_VERSION}/${MAUTIC_VERSION}.zip \
-    && echo "$MAUTIC_SHA1 */tmp/mautic.zip" | sha1sum -c - \
+# RUN curl -o /tmp/mautic.zip -SL https://github.com/djktno/mautic/releases/download/${MAUTIC_VERSION}/${MAUTIC_VERSION}.zip \
+#     && echo "$MAUTIC_SHA1 */tmp/mautic.zip" | sha1sum -c - \
+#     && rm -rf /var/www/html \
+#     && mkdir /var/www/html \
+#     && unzip /tmp/mautic.zip -d /var/www/html \
+#     && rm /tmp/mautic.zip \
+#     && chown -R www-data:www-data /var/www/html
+
+# Use local package and extract to web volume
+COPY releases/${MAUTIC_VERSION}.zip /tmp/mautic.zip
+
+RUN echo "$MAUTIC_SHA1 */tmp/mautic.zip" | sha1sum -c - \
     && rm -rf /var/www/html \
     && mkdir /var/www/html \
     && unzip /tmp/mautic.zip -d /var/www/html \
@@ -98,18 +111,26 @@ RUN curl -o /tmp/mautic.zip -SL https://github.com/mautic/mautic/releases/downlo
     && chown -R www-data:www-data /var/www/html
 
 # Drop in redirectors to volume
-COPY common/paths_local.php /var/www/html/app/config/paths_local.php
-COPY common/parameters_local.php /var/www/html/app/config/parameters_local.php
+COPY common/paths_local.php /var/www/html/docroot/app/config/paths_local.php
+COPY common/parameters_local.php /var/www/html/docroot/app/config/parameters_local.php
+
+# Drop in configuration files for sshd access
+COPY common/sshd_config /etc/ssh/sshd_config
 
 # Copy init scripts and custom .htaccess
 COPY common/docker-entrypoint.sh /entrypoint.sh
 COPY common/makeconfig.php /makeconfig.php
 COPY common/makedb.php /makedb.php
 COPY common/mautic.crontab /etc/cron.d/mautic
+COPY common/000-default.conf /etc/apache2/sites-available/000-default.conf
 RUN chmod 644 /etc/cron.d/mautic
 
 # Enable Apache Rewrite Module
 RUN a2enmod rewrite
+
+RUN echo "root:Docker!" | chpasswd
+
+EXPOSE 2222 80
 
 # Apply necessary permissions
 RUN ["chmod", "+x", "/entrypoint.sh"]

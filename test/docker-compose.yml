@@ -1,5 +1,5 @@
 mautic:
-  image: mautic/mautic
+  image: crmauticnonprod.azurecr.io/mautic:v4.4.6+s
   links:
     - mauticdb:mysql
   ports:

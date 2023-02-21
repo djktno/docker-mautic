@@ -1,13 +1,13 @@
 #!/bin/bash
 set -e
 
-current="$(curl https://api.github.com/repos/mautic/mautic/releases/latest -s | jq -r .name)"
+current="$(curl https://api.github.com/repos/mautic/mautic/releases/latest -s | jq -r .tag_name)"
 
 # TODO - Expose SHA signatures for the packages somewhere
 wget -O mautic.zip https://github.com/mautic/mautic/releases/download/$current/$current.zip
 sha1="$(sha1sum mautic.zip | sed -r 's/ .*//')"
 
-for variant in apache fpm; do
+for variant in apache; do
 	(
 		set -x
 

@@ -176,65 +176,11 @@ Access your new Mautic on `http://localhost:8080` or `http://host-ip:8080` in a 
 
 If you change the _Site Address_ of _Mautic General Settings tab_ to HTTPS (behind a reverse proxy), you can use `0.0.0.0/0` as Trusted Proxies to avoid a redirect loop error. See [documentation](http://symfony.com/doc/current/request/load_balancer_reverse_proxy.html)
 
-## ... via [`docker-compose`](https://github.com/docker/compose)
-
-Example `docker-compose.yml` for `mautic`:
-
-```yaml
-version: "2"
-
-services:
-  database:
-    image: powertic/percona-docker
-    container_name: database
-    environment:
-      MYSQL_ROOT_PASSWORD: mypassword
-    ports:
-      - "3306:3306"
-    volumes:
-      - database:/var/lib/mysql
-    restart: always
-    networks:
-      - mauticnet
-    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_general_ci --sql-mode=""
-
-  mautic:
-    container_name: mautic
-    image: mautic/mautic:v4-apache
-    volumes:
-      - mautic_data:/data
-    environment:
-      - MAUTIC_DB_HOST=database
-      - MAUTIC_DB_USER=root
-      - MAUTIC_DB_PASSWORD=mypassword
-      - MAUTIC_DB_NAME=mautic4
-    restart: always
-    networks:
-      - mauticnet
-    ports:
-      - "8880:80"
-```
-
-Run `docker-compose up`, wait for it to initialize completely, and visit `http://localhost:8080` or `http://host-ip:8080`.
-
-> This compose file was tested on compose file version 3.0+ (docker engine 1.13.0+), see the relation of compose file and docker engine [here](https://docs.docker.com/compose/compose-file/compose-versioning/).
-
 # Supported Docker versions
 
-This image is officially supported on Docker version 1.7.1.
+This image is officially supported on Docker version 20.10.18
 
-Support for older versions (down to 1.0) is provided on a best-effort basis.
+Support for older versions is provided on a best-effort basis.
 
-# User Feedback
 
-## Issues
 
-If you have any problems with or questions about this image, please contact us through a [GitHub issue](https://github.com/mautic/docker-mautic/issues).
-
-You can also reach the Mautic community through its [online forums](https://www.mautic.org/community/) or the [Mautic Slack channel](https://www.mautic.org/slack/).
-
-## Contributing
-
-You are invited to contribute new features, fixes, or updates, large or small; we are always thrilled to receive pull requests, and do our best to process them as fast as we can.
-
-Before you start to code, we recommend discussing your plans through a [GitHub issue](https://github.com/mautic/docker-mautic/issues), especially for more ambitious contributions. This gives other contributors a chance to point you in the right direction, give you feedback on your design, and help you find out if someone else is working on the same thing.

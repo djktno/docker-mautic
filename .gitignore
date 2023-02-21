@@ -3,3 +3,5 @@ test-m3-apache.yaml
 apache/build.sh
 fpm/build.sh
 deploy-test-m3-apache.sh
+releases/*
+.DS_Store

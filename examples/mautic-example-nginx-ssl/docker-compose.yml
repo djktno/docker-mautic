@@ -2,7 +2,7 @@ version: "2"
 services:
   mautic:
     restart: unless-stopped
-    image: mautic/mautic:v4-apache
+    image: crmauticnonprod.azurecr.io/mautic:v4.4.6+s
     depends_on:
       - mysql
     ports:
